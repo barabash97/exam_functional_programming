@@ -1,0 +1,70 @@
+OCAMLC=ocamlc
+OCAMLLEX=ocamllex
+OCAMLYACC=ocamlyacc
+OCAMLOPT=ocamlopt
+OCAMLDEP=ocamldep
+INCLUDES=                 # all relevant -I options here
+OCAMLFLAGS=$(INCLUDES)    # add other options for ocamlc here
+OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
+LIBS=
+
+info:
+	@echo Possible options: byte native clean count depend parser
+
+# The list of interfaces for compilation (*.cmi)
+PROG_OBJS = parser.cmi 
+
+
+# The list of object files for byte compilation (*.cmo)
+PROGB_OBJS = language.cmo lexer.cmo parser.cmo logic.cmo prova.cmo
+
+byte : $(PROGB_OBJS) 
+	$(OCAMLC) -o prova $(OCAMLFLAGS) $(PROGB_OBJS)
+ 
+# The list of object files for native-cod compilation (*.cmx)
+PROGX_OBJS = language.cmx lexer.cmx parser.cmx logic.cmx prova.cmx
+
+native : $(PROGX_OBJS)
+	$(OCAMLOPT) -o prova $(OCAMLFLAGS) $(PROGX_OBJS)
+
+
+# files for lexers and parsers
+PARSERS = lexer.ml parser.mli parser.ml 
+
+parser: $(PARSERS)
+
+# Common rules
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .mll .mly
+
+.ml.cmo:
+	$(OCAMLC) $(OCAMLFLAGS) -c $<
+
+.mli.cmi:
+	$(OCAMLC) $(OCAMLFLAGS) -c $<
+
+.ml.cmx:
+	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
+
+.mll.ml:
+	$(OCAMLLEX) $<
+
+%.ml %.mli: %.mly
+	ocamlyacc $<
+
+# Clean up
+clean:
+	rm -f *.cm[iox]
+	rm lexer.ml
+	rm parser.ml
+	rm parser.mli
+	rm -f *.o *~ *#
+
+# Counting
+count:
+	- wc -l *.mli *.ml *.mll *.mly 2> /dev/null
+
+# Dependencies
+depend:
+	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
+
+include .depend
